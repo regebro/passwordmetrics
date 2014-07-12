@@ -11,10 +11,12 @@ def configure(groups=None, words=None, substitutions=None):
     
     # Define up the different character groups.
     if groups is None:
+        # The default splits Latin-1 into seven different groups. The three last should be avoided, really.
         groups = {'lowercase': set(string.ascii_lowercase), 
                   'uppercase': set(string.ascii_uppercase),
                   'digits': set(string.digits),
                   'punctuation': set(string.punctuation),
+                  'whitespace': set(string.whitespace),
                   'non-printable': set(chr(i) for i in range(128) if chr(i) not in string.printable), # non-printable
                   'other': set(chr(i) for i in range(128, 256)), # latin-1
                   }
@@ -75,31 +77,34 @@ def _find_words(pw, words):
     
 def _character_entropy(pw):
     if not pw:
-        return 0, set()
+        return 0, set(), set()
 
     chars = set()
     groups = set()
-    for name, group in config['groups'].items():
-        for char in pw:
+    unkown = set()
+    for char in pw:
+        for name, group in config['groups'].items():
             if char in group:
                 chars.update(group)
                 groups.add(name)
                 break
-        # If the character is in none of the groups, is it then Unicode. WHAT DO WE DO!?
-        # Currently we count it, but do not increase the entropy, which we probably should.
-        
+        else:
+            # The character is in none of the groups
+            unkown.add(char)
+            
     bit_per_word = math.log(len(chars), 2) # ie 128 characters would make 7 bits
-    return len(set(pw)) * bit_per_word, groups
+    return len(set(pw)) * bit_per_word, groups, unkown
 
 
 def metrics(pw):
     all_words = config['words']
     found_words, rest = _find_words(pw, all_words)
     w = sum(all_words[word] for word in found_words)
-    c, groups = _character_entropy(rest)
+    c, groups, unkown = _character_entropy(rest)
     return {'entropy': w + c,
             'words': w,
             'used_groups': groups, 
             'unused_groups': set(config['groups']) - groups,
             'length': len(pw),
+            'unknown_chars': unkown,
             }

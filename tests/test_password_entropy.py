@@ -7,17 +7,18 @@ test_passwordmetrics
 
 Tests for `passwordmetrics` module.
 """
-
+from __future__ import unicode_literals
 import unittest
-
 import passwordmetrics
+import string
 
 
 class TestPasswordMetrics(unittest.TestCase):
 
-    def setUp(self):
+    @classmethod
+    def setUpClass(cls):
         passwordmetrics.configure()
-        self.words = {'correct': 1, 'horse': 2, 'battery': 3, 'staple': 4, 'a': 1, 'incorrect': 1, 'bat': 1}
+        cls.words = {'correct': 1, 'horse': 2, 'battery': 3, 'staple': 4, 'a': 1, 'incorrect': 1, 'bat': 1}
         
     def test_wordcount(self):
         words, rest = passwordmetrics._find_words('correcthorseb!wdbatterystaplerWd3t', self.words)
@@ -29,21 +30,21 @@ class TestPasswordMetrics(unittest.TestCase):
         self.assertEqual(rest, 'bcdefgh')        
                 
     def test_character_entropy(self):
-        entropy, groups = passwordmetrics._character_entropy('abcdefgh')
+        entropy, groups, unkown = passwordmetrics._character_entropy('abcdefgh')
         self.assertAlmostEqual(entropy, 37.6035177451287)
         self.assertEqual(groups, {'lowercase'})
 
-        entropy, groups = passwordmetrics._character_entropy('12345678')
+        entropy, groups, unkown = passwordmetrics._character_entropy('12345678')
         self.assertAlmostEqual(entropy, 26.5754247590989)
         self.assertEqual(groups, {'digits'})
 
         # Repeated characters count as one:
-        entropy, groups = passwordmetrics._character_entropy('aAaAaAaA')
+        entropy, groups, unkown = passwordmetrics._character_entropy('aAaAaAaA')
         self.assertAlmostEqual(entropy, 11.4008794362821)
         self.assertEqual(groups, {'lowercase', 'uppercase'})
 
         # As good as it gets for an 8 char password
-        entropy, groups = passwordmetrics._character_entropy('xyFg98%!')
+        entropy, groups, unkown = passwordmetrics._character_entropy('xyFg98%!')
         self.assertAlmostEqual(entropy, 52.4367108134211)
         self.assertEqual(groups, {'lowercase', 'uppercase', 'digits', 'punctuation'})
         
@@ -59,7 +60,42 @@ class TestPasswordMetrics(unittest.TestCase):
         self.assertAlmostEqual(passwordmetrics.metrics('xyFg98%!')['entropy'], 48.9425059451315)
         self.assertAlmostEqual(passwordmetrics.metrics('correcthorsebatterystaple')['entropy'], 45.58216824444706)
         self.assertAlmostEqual(passwordmetrics.metrics('correcthorseb!wdbatterystaplerWd3t')['entropy'], 85.04455418142474)
+
+class TestCustomConfig(unittest.TestCase):
         
+    def test_nonascii_chars(self):
+        passwordmetrics.configure()
+        # In 8-bit strings, ö is a part of Latin-1
+        entropy, groups, unkown = passwordmetrics._character_entropy(b'abcdefghö')
+        self.assertEqual(unkown, set())
+        
+        # But not with unicode (this raises a warning)
+        entropy, groups, unkown = passwordmetrics._character_entropy('abcdefghö')
+        self.assertEqual(unkown, set('ö'))
+    
+        # Unicode test!
+        entropy, groups, unkown = passwordmetrics._character_entropy('abcdefgh\N{LATIN CAPITAL LETTER H WITH STROKE}')
+        self.assertEqual(unkown, set('\N{LATIN CAPITAL LETTER H WITH STROKE}'))
+    
+        # If you want these to work, you have to make a custom configuration.
+        # I'll make one that uses all unicode characters even under Python 2.
+        # This also get's rid of the warning.
+        if 'unicode' not in locals():
+            unicode = str
+        groups = {'lowercase': set(unicode(string.ascii_lowercase)), 
+                  'uppercase': set(unicode(string.ascii_uppercase)),
+                  'digits': set(unicode(string.digits)),
+                  'punctuation': set(unicode(string.punctuation)),
+                  'whitespace': set(unicode(string.whitespace)),
+                  'non-printable': set(unicode((i)) for i in range(128) if chr(i) not in string.printable), # non-printable
+                  'extras': set('åäöö\N{LATIN CAPITAL LETTER H WITH STROKE}'),
+                  }
+        
+        passwordmetrics.configure(groups=groups)
+        # This will still raise an error, 
+        entropy, groups, unkown = passwordmetrics._character_entropy('abcdefghö\N{LATIN CAPITAL LETTER H WITH STROKE}')
+        self.assertEqual(unkown, set())
+
 
 if __name__ == '__main__':
     unittest.main()
