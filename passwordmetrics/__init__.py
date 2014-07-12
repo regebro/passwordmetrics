@@ -11,8 +11,8 @@ def configure(groups=None, words=None, substitutions=None):
     
     # Define up the different character groups.
     if groups is None:
-        groups = {'lowercase': set(string.lowercase), 
-                  'uppercase': set(string.uppercase),
+        groups = {'lowercase': set(string.ascii_lowercase), 
+                  'uppercase': set(string.ascii_uppercase),
                   'digits': set(string.digits),
                   'punctuation': set(string.punctuation),
                   'non-printable': set(chr(i) for i in range(128) if chr(i) not in string.printable), # non-printable
