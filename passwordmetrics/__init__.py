@@ -9,7 +9,7 @@ config = {}
 def configure(groups=None, words=None, substitutions=None):
     global config
     
-    # Define up the different character groups.
+    # Define up the d   ifferent character groups.
     if groups is None:
         # The default splits Latin-1 into seven different groups. The three last should be avoided, really.
         groups = {'lowercase': set(string.ascii_lowercase), 
@@ -48,8 +48,11 @@ def _find_words(pw, words):
     chunks = []
     
     # Replace leet spellings
-    # XXX this should increase entropy though, and currently does not
-    substituted = ''.join([config['substitutions'].get(c, c).lower() for c in pw])    
+    # XXX this should increase entropy though, and currently does not, 
+    # maybe add them to the 'rest'?
+    substituted = ''.join([config['substitutions'].get(c, c).lower() for c in pw])   
+    
+    # Find all possible words in the password
     for c in substituted:
         chunks = [chunk + c for chunk in chunks]
         chunks.insert(0, c)
@@ -59,9 +62,18 @@ def _find_words(pw, words):
             if chunk in words:
                 words_found.add(chunk) #add to set of words
 
+    # In "canotier" the above will find 'canotier', 'can', 'not', 'tier',
+    # 'an', 'no' and 'a'. But only 'canotier' should count. 
     rest = pw
     found = set()
-    for word in sorted(words_found, key=len, reverse=True):
+    # We sort the words on length, and then alphabetically for consistency.
+    # What order words are handled in can make a difference on entropy.
+    # Should you for example have "2can0the" as a password it contains "can",
+    # "not" and "the". If it picks "not" as the first word, this is the only
+    # one that is found, but otherwise it will find "can" and "not". Possibly
+    # this algorithm could be changed to try to find the most non-overlapping
+    # words (and hence the lowest entropy) but this is good enough I think.
+    for word in sorted(words_found, key=lambda x: (len(x), x), reverse=True):
         word_length = len(word)
         while True:
             pos = substituted.find(word)
@@ -72,7 +84,6 @@ def _find_words(pw, words):
             found.add(word)
     
     return found, rest
-
     
     
 def _character_entropy(pw):
@@ -83,6 +94,8 @@ def _character_entropy(pw):
     groups = set()
     unkown = set()
     for char in pw:
+        if isinstance(char, int):
+            char = chr(char)
         for name, group in config['groups'].items():
             if char in group:
                 chars.update(group)
@@ -91,7 +104,7 @@ def _character_entropy(pw):
         else:
             # The character is in none of the groups
             unkown.add(char)
-            
+    
     bit_per_word = math.log(len(chars), 2) # ie 128 characters would make 7 bits
     return len(set(pw)) * bit_per_word, groups, unkown
 
@@ -102,7 +115,9 @@ def metrics(pw):
     w = sum(all_words[word] for word in found_words)
     c, groups, unkown = _character_entropy(rest)
     return {'entropy': w + c,
-            'words': w,
+            'word_entropy': w,
+            'character_entropy': c,
+            'words': found_words,
             'used_groups': groups, 
             'unused_groups': set(config['groups']) - groups,
             'length': len(pw),
