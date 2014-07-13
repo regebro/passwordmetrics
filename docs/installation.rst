@@ -4,9 +4,9 @@ Installation
 
 At the command line::
 
-    $ easy_install password_entropy
+    $ easy_install passwordmetrics
 
 Or, if you have virtualenvwrapper installed::
 
-    $ mkvirtualenv password_entropy
-    $ pip install password_entropy
+    $ mkvirtualenv passwordmetrics
+    $ pip install passwordmetrics

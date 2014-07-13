@@ -2,6 +2,6 @@
 Usage
 ========
 
-To use password_entropy in a project::
+To use passwordmetrics in a project::
 
-	import password_entropy
+	import passwordmetrics
