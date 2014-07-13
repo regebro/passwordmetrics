@@ -2,12 +2,13 @@
 Credits
 =======
 
-Development Lead
-----------------
+
+Development
+-----------
 
 * Lennart Regebro <regebro@gmail.com>
 
-Contributors
-------------
+Obvious inspiration
+-------------------
 
-None yet. Why not be the first?
+* http://xkcd.com/936/
