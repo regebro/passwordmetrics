@@ -10,6 +10,7 @@ try:
 except ImportError:
     from distutils.core import setup
 
+import passwordmetrics
 
 readme = open('README.rst').read()
 history = open('HISTORY.rst').read().replace('.. :changelog:', '')
@@ -24,7 +25,7 @@ test_requirements = [
 
 setup(
     name='passwordmetrics',
-    version='1.0',
+    version=passwordmetrics.__version__,
     description='Checking the entropy of a password. Useful in password checkers.',
     long_description=readme + '\n\n' + history,
     author='Lennart Regebro',
