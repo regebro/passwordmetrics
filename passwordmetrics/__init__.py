@@ -37,8 +37,9 @@ def configure(groups=None, words=None, substitutions=None):
     # Set up common substitutions:
     if substitutions is None:
         substitutions = {'0': 'o', '1': 'i', '2': 'z', '3': 'e', '4': 'a',
-                         '5': 's', '6': 'b', '7': 't', '8': 'b', '9': 'g', '!': 'i', '#': 3,
-                         '$': 's', '&': 'g', '@': 'a', '[': 'c', '(': 'c', '+': 't'}
+                         '5': 's', '6': 'b', '7': 't', '8': 'b', '9': 'g',
+                         '!': 'i', '#': '3', '$': 's', '&': 'g', '@': 'a',
+                         '[': 'c', '(': 'c', '+': 't'}
     config['substitutions'] = substitutions
 
 

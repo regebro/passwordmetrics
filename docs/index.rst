@@ -8,6 +8,7 @@ Contents:
 
    readme
    installation
+   passwords
    usage
    contributing
    authors
