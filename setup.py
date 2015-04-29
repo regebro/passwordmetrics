@@ -15,14 +15,6 @@ import passwordmetrics
 readme = open('README.rst').read()
 history = open('HISTORY.rst').read().replace('.. :changelog:', '')
 
-requirements = [
-    # TODO: put package requirements here
-]
-
-test_requirements = [
-    # TODO: put package test requirements here
-]
-
 setup(
     name='passwordmetrics',
     version=passwordmetrics.__version__,
@@ -37,7 +29,6 @@ setup(
     package_dir={'passwordmetrics':
                  'passwordmetrics'},
     include_package_data=True,
-    install_requires=requirements,
     license="MIT",
     zip_safe=False,
     keywords='passwordmetrics',
@@ -54,5 +45,4 @@ setup(
         'Programming Language :: Python :: 3.4',
     ],
     test_suite='tests',
-    tests_require=test_requirements
 )

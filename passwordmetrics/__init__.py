@@ -66,8 +66,6 @@ def _find_words(pw, words):
     chunks = []
 
     # Replace leet spellings
-    # XXX this should increase entropy though, and currently does not,
-    # maybe add them to the 'rest'?
     substituted = ''.join([config['substitutions'].get(c, c).lower() for c in pw])
 
     # Find all possible words in the password
