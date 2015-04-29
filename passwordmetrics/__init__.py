@@ -43,6 +43,21 @@ def configure(groups=None, words=None, substitutions=None):
     config['substitutions'] = substitutions
 
 
+def _find_groups(pw):
+    groups = config['groups']
+    unused_groups = set(groups.keys())
+    used_groups = set()
+
+    for c in pw:
+        for group in unused_groups:
+            if c in groups[group]:
+                used_groups.add(group)
+                unused_groups.remove(group)
+                break
+
+    return used_groups, unused_groups
+
+
 def _find_words(pw, words):
     """Returns the found words and the non-word characters"""
     max_len = max(map(len, words)) #longest word in the set of words
@@ -76,53 +91,69 @@ def _find_words(pw, words):
     # one that is found, but otherwise it will find "can" and "not". Possibly
     # this algorithm could be changed to try to find the most non-overlapping
     # words (and hence the lowest entropy) but this is good enough I think.
+    remaining = substituted
     for word in sorted(words_found, key=lambda x: (len(x), x), reverse=True):
         word_length = len(word)
         while True:
-            pos = substituted.find(word)
+            pos = remaining.find(word)
             if pos == -1:
                 break
             rest = rest[:pos] + rest[pos+word_length:]
-            substituted = substituted[:pos] + substituted[pos+word_length:]
+            remaining = remaining[:pos] + remaining[pos+word_length:]
             found.add(word)
+
+    # Now check if any of these found words used character replacements.
+    # In that case add those replacements to the "rest" to increase entropy.
+    for word in found:
+        start = 0
+        while True:
+            pos = substituted.find(word, start)
+            if pos == -1:
+                break
+            original = pw[pos:pos+len(word)]
+            for c in original:
+                if c in config['substitutions']:
+                    if c not in rest:
+                        rest += c
+            # Find all copies of the word
+            start = pos + 1
 
     return found, rest
 
 
 def _character_entropy(pw):
     if not pw:
-        return 0, set(), set()
+        return 0, set()
 
     chars = set()
-    groups = set()
-    unkown = set()
+    unknown = set()
     for char in pw:
         if isinstance(char, int):
             char = chr(char)
         for name, group in config['groups'].items():
             if char in group:
                 chars.update(group)
-                groups.add(name)
                 break
         else:
             # The character is in none of the groups
-            unkown.add(char)
+            unknown.add(char)
 
     bit_per_word = math.log(len(chars), 2) # ie 128 characters would make 7 bits
-    return len(set(pw)) * bit_per_word, groups, unkown
+    return len(set(pw)) * bit_per_word, unknown
 
 
 def metrics(pw):
     all_words = config['words']
+    used_groups, unused_groups = _find_groups(pw)
     found_words, rest = _find_words(pw, all_words)
     w = sum(all_words[word] for word in found_words)
-    c, groups, unkown = _character_entropy(rest)
+    c, unknown = _character_entropy(rest)
     return {'entropy': w + c,
             'word_entropy': w,
             'character_entropy': c,
             'words': found_words,
-            'used_groups': groups,
-            'unused_groups': set(config['groups']) - groups,
+            'used_groups': used_groups,
+            'unused_groups': unused_groups,
             'length': len(pw),
-            'unknown_chars': unkown,
+            'unknown_chars': unknown,
             }
