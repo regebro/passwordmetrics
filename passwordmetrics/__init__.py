@@ -4,7 +4,7 @@ import string
 import collections
 from io import open
 
-__version__ = '1.0a'
+__version__ = '1.0b1'
 
 config = {}
 
