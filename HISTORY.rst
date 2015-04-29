@@ -1,7 +1,7 @@
 .. :changelog:
 
 History
--------
+=======
 
 1.0 (unreleased)
 ----------------
