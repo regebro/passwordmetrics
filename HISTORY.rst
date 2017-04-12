@@ -7,7 +7,7 @@ History
 1.0 (unreleased)
 ----------------
 
-- Nothing changed yet.
+- Stable release, better docs.
 
 
 1.0b1 (2015-04-29)
