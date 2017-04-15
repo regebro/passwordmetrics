@@ -11,7 +11,7 @@ config = {}
 def configure(groups=None, words=None, substitutions=None):
     global config
 
-    # Define up the d   ifferent character groups.
+    # Define up the different character groups.
     if groups is None:
         # The default splits Latin-1 into seven different groups. The three last should be avoided, really.
         groups = {'lowercase': set(string.ascii_lowercase),
@@ -19,7 +19,7 @@ def configure(groups=None, words=None, substitutions=None):
                   'digits': set(string.digits),
                   'punctuation': set(string.punctuation),
                   'whitespace': set(string.whitespace),
-                  'non-printable': set(chr(i) for i in range(128) if chr(i) not in string.printable), # non-printable
+                  'non-printable': set(chr(i) for i in range(128) if chr(i) not in string.printable),
                   'other': set(chr(i) for i in range(128, 256)), # latin-1
                   }
     config['groups'] = groups

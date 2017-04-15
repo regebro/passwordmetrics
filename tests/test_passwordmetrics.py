@@ -11,7 +11,7 @@ from __future__ import unicode_literals
 import unittest
 import passwordmetrics
 import string
-
+from io import open
 
 class TestPasswordMetrics(unittest.TestCase):
 
@@ -131,8 +131,6 @@ class TestCustomConfig(unittest.TestCase):
         self.assertEqual(unkown, set('\N{LATIN CAPITAL LETTER H WITH STROKE}'))
 
         # If you want these to work, you have to make a custom configuration.
-        # I'll make one that uses all unicode characters even under Python 2.
-        # This also get's rid of the warning.
         if 'unicode' not in locals():
             unicode = str
         groups = {'lowercase': set(unicode(string.ascii_lowercase)),
@@ -140,7 +138,7 @@ class TestCustomConfig(unittest.TestCase):
                   'digits': set(unicode(string.digits)),
                   'punctuation': set(unicode(string.punctuation)),
                   'whitespace': set(unicode(string.whitespace)),
-                  'non-printable': set(unicode((i)) for i in range(128) if chr(i) not in string.printable), # non-printable
+                  'non-printable': set(unicode((i)) for i in range(128) if chr(i) not in string.printable),
                   'extras': set('åäöö\N{LATIN CAPITAL LETTER H WITH STROKE}'),
                   }
 
@@ -148,19 +146,26 @@ class TestCustomConfig(unittest.TestCase):
         # This will still raise an error,
         entropy, unkown = passwordmetrics._character_entropy('abcdefghö\N{LATIN CAPITAL LETTER H WITH STROKE}')
         self.assertEqual(unkown, set())
-        # return to default config, just to be safe
-        passwordmetrics.configure()
 
-    def test_verifygroups(self):
-        passwordmetrics.configure()
-        groups = passwordmetrics.config['groups']
-        for name, g in groups.items():
-            for c in g:
-                for n, x in groups.items():
-                    if n == name:
-                        continue
-                    if c in x:
-                        print("Group %s and group %s both have character %s" % (name, n, c))
+    def test_custom_wordlist(self):
+        # You might want to include non-english words in the word list.
+        words = {}
+        # Open a toy wordlist
+        with open('docs/ordlista_sv.txt', 'rt', encoding='latin-1') as wordlist:
+            for line in wordlist.readlines():
+                word, entropy = line.strip().split(' ')
+                words[word] = float(entropy)
+
+        passwordmetrics.configure(words=words)
+
+        # It won't find English words
+        res = passwordmetrics.metrics('correcthorsebatterystapler')
+        self.assertEqual(res['words'], set())
+
+        # It will find some Swedish words
+        res = passwordmetrics.metrics('korrekthästbatterihäftapparat')
+        self.assertEqual(res['words'], set([u'batteri', u'korrekt', u'h\xe4ftapparat', u'h\xe4st']))
+
 
 if __name__ == '__main__':
     unittest.main()

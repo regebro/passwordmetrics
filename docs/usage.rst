@@ -13,14 +13,14 @@ To use passwordmetrics you import it and run the configure method.
 You can then get metrics for passwords:
 
     >>> passwordmetrics.metrics('correcthorseb!wdbatterystaplerWd6t')
-    {'unused_groups': set(['punctuation', 'non-printable', 'other', 'whitespace']),
+    {'unused_groups': {'whitespace', 'non-printable', 'other'},
      'word_entropy': 53.48690135737497,
-     'entropy': 89.21207921969622,
-     'words': set(['battery', 'i', 'horse', 'stapler', 'correct']),
-     'unknown_chars': set([]),
-     'used_groups': set(['digits', 'uppercase', 'lowercase']),
+     'entropy': 99.36902331911844,
+     'words': {'battery', 'i', 'horse', 'stapler', 'correct'},
+     'unknown_chars': set(),
+     'used_groups': {'digits', 'uppercase', 'lowercase', 'punctuation'},
      'length': 34,
-     'character_entropy': 35.72517786232125}
+     'character_entropy': 45.882121961743465}
 
 
 Advanced usage
@@ -31,35 +31,38 @@ your usecase. This is particularily useful if you want to have
 language-specific wordlists or character groups:
 
     >>> import passwordmetrics
+    >>> import string
+    >>> from io import open
 
-    >>> groups = {'lowercase': set(u'abcdefghijklmnopqrstuvxyzåäö'),
-                  'uppercase': set(u'ABCDEFGHIJKLMNOPQRSTUVXYZÅÄÖ'),
-                  'digits': set(string.digits),
-                  'punctuation': set(string.punctuation),
-                  'whitespace': set(string.whitespace),
-                  }
+    >>> groups = {'lowercase': set(u'abcdefghijklmnopqrstuvxyz\xe5\xe4\xf6'),
+    ...           'uppercase': set(u'ABCDEFGHIJKLMNOPQRSTUVXYZ\xc5\xd4\xd6'),
+    ...           'digits': set(string.digits),
+    ...           'punctuation': set(string.punctuation),
+    ...           'whitespace': set(string.whitespace),
+    ...           }
 
-    >>> with open('ordlista_sv.txt', 'rt', encoding='latin-1') as wordlist:
+    >>> words = {}
+    >>> with open('docs/ordlista_sv.txt', 'rt', encoding='latin-1') as wordlist:
     ...     for line in wordlist.readlines():
     ...         word, entropy = line.strip().split(' ')
     ...         words[word] = float(entropy)
 
     >>> substitutions = {'0': 'o', '1': 'i', '2': 'z', '3': 'e', '4': 'a',
-                         '5': 's', '6': 'b', '7': 't', '8': 'b', '9': 'g',
-                         '!': 'i', '#': 3, '$': 's', '&': 'g', '@': 'a',
-                         '[': 'c', '(': 'c', '+': 't', '{': 'ä', '|': ö,
-                         '}': 'å', '[': 'Ä', '\': 'Ö', ']': 'Å'}
+    ...                  '5': 's', '6': 'b', '7': 't', '8': 'b', '9': 'g',
+    ...                  '!': 'i', '#': 3, '$': 's', '&': 'g', '@': 'a',
+    ...                  '[': 'c', '(': 'c', '+': 't', '{': '\xe4', '|': '\xf6',
+    ...                  '}': '\xe5', '[': '\xd4', '\\': '\xd6', ']': '\xc5'}
 
-    >>> passwordmetrics.configure(grops=groups, words=words, substitutions=substitutions)
-    >>> passwordmetrics.metrics('korrekthästbatter1häftapparat')
-    {'unused_groups': set(['punctuation', 'whitespace']),
-     'word_entropy': 62.24279530886037,
-     'entropy': 85.04455418142474,
-     'words': set(['korrekt', 'häst', 'batteri', 'häftapparat']),
-     'unknown_chars': set([]),
-     'used_groups': set(['uppercase', 'lowercase']),
-     'length': 31,
-     'character_entropy': 22.80175887256437}
+    >>> passwordmetrics.configure(groups=groups, words=words, substitutions=substitutions)
+    >>> passwordmetrics.metrics(u'korrekth\xe4stbatterih\xe4ftapparat')
+    {'unused_groups': {'digits', 'uppercase', 'punctuation', 'whitespace'},
+     'word_entropy': 29.3,
+     'entropy': 29.3,
+     'words': {u'batteri', u'korrekt', u'h\xe4ftapparat', u'h\xe4st'},
+     'unknown_chars': set(),
+     'used_groups': {'lowercase'},
+     'length': 29,
+     'character_entropy': 0}
 
 
 ``groups``
